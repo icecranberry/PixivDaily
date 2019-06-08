@@ -1,0 +1,12 @@
+0. 本文件下的三个文件："pixivSpider.py", "setting.py", "使用说明.txt"必须同时放在一个空白文件夹中（解压后默认状况),不要放其他东西
+1. pyhton必须是python3版本,必须已经安装 requests库。
+   检验方法, win+R, cmd命令行，输入python进入python环境,输入import requests，若无异常则说明已安装requests库
+2. 若没有requests库，先安pip,将pip.exe路径加入电脑环境变量,安装后可cmd命令行输入pip检测pip是否已经安装好
+   pip安装好之后，cmd命令行输入pip install requests安装requests库,检验是否安装好可采用1中的方法
+3. 以上都完成后，挂vpn，确保可以上外网
+4. 配置参数打开setting.py文件可以自行修改，里边有注释，注意邮箱，密码必须输入
+5. cmd打开命令行窗口,cd 到当前文件夹目录, 输入 python pixivSpider.py运行程序
+6. 网断了则程序不会退出，重新挂vpn就行，强制退出使用ctrl+c
+7. 下载图片保存在pictures文件夹里,TempData文件夹不要修改
+8. 初始化文件夹只需把setting.py 文件里边对应的值修改，然后执行第5步。
+
