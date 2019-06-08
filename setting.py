@@ -7,7 +7,7 @@ class Setting(object):
     def __init__(self):
         ######################### 以下参数可以修改 #################################
         # 此处输入搜索关键词
-        self.keyword = '巫女 ロリ'
+        self.keyword = ''
         # 下边引号中输入p站登录邮箱
         self.pixiv_id = ''
         # 下边输入p站密码
