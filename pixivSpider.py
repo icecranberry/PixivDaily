@@ -11,7 +11,6 @@ from setting import Setting
 import sys
 from math import ceil
 
-
 # 爬虫主体
 class MyPixivCrawler(object):
     # 初始化爬虫，在爬虫对象创建之时自动调用
@@ -233,8 +232,6 @@ class MyPixivCrawler(object):
                         str(self.setting.lenpage) + " " +
                         str(self.setting.total_find_pictures))
             self.setting.logInfo("当前爬取状态已成功保存!")
-
-
 
     # 对每一页的图片链接列表挨个爬取
     def crawl_url_list(self, url_list):
