@@ -6,6 +6,7 @@ import os
 import threading
 import datetime
 import shutil
+import json
 
 class Setting(object):
     def __init__(self):
@@ -25,11 +26,19 @@ class Setting(object):
         # 线程数量刷新间隔,单位为s,检测是否有空闲的线程(可调小，但不宜小于0.1)
         self.sleep = 0.5
         # 初始化文件夹,改为True将恢复本文件夹解压缩后的初始状态，删除图片文件，历史记录文件和下载的图片文件等，慎用
+        # TODO: 改完True运行一次后立马改成False,不然下一次又自动初始化了
         self.cleanDir = False
         # 程序出现异常后重新尝试登陆的间隔时间,单位s
         self.restart_sleep = 5
         # 检索结果最大页数
         self.max_lenpage = 1000     # p站普通用户至多可显示1000页搜索结果，4w张图
+        ########################### 以下是更新操作参数 ########################################
+        # 是否更新,若更新图片,则把下边的值改为True,并在更新过程中一直保持为True,无论是否重启程序
+        self.is_updating = False
+        # 更新状态下载最大页数  调整更新的范围,视察上一次更新的间隔而定
+        self.update_maxpage = 5
+        # 更新状态图片保存文件夹
+        self.update_dir = 'updates'
         ########################### 以下参数不要更改###########################################
         self.website = 'https://www.pixiv.net/search.php?s_mode=s_tag&word='
         self.page = '&order=date_d&p='
@@ -64,6 +73,8 @@ class Setting(object):
         # 存储当前页未访问的图片链接
         self.urls_waitting = {}
         self.urls_waitting_path = os.path.join(self.TempData_dir, 'urls_waitting.json')
+        # 更新状态标志文件路径  若想从头更新,把这个文件删了就行
+        self.update_mark = os.path.join(self.TempData_dir, 'update_mark.txt')
 
         self.log_path = 'log.txt'           # 存储日志信息
         self.working_thread = 0             # 工作中的线程个数
@@ -77,11 +88,13 @@ class Setting(object):
         self.login_path = 'https://accounts.pixiv.net/login'
         self.post_login_path = 'https://accounts.pixiv.net/api/login?lang=zh'
         self.check_login_path = 'https://www.pixiv.net/setting_user.php'
+
         # 若文件夹不存在，则创建文件夹
         if not os.path.isdir(self.TempData_dir):
             os.makedirs(self.TempData_dir)
         if not os.path.isdir(self.result_dir):
             os.makedirs(self.result_dir)
+
 
     # 初始化文件夹的函数
     def clean(self):
@@ -89,8 +102,10 @@ class Setting(object):
             os.remove(self.log_path)
         if os.path.isdir(self.result_dir):
             shutil.rmtree(self.result_dir)
+            os.makedirs(self.result_dir)
         if os.path.isdir(self.TempData_dir):
             shutil.rmtree(self.TempData_dir)
+            os.makedirs(self.TempData_dir)
         if os.path.isdir('__pycache__'):
             shutil.rmtree('__pycache__')
         self.logInfo("已成功初始化文件夹!")
@@ -103,3 +118,18 @@ class Setting(object):
         with open(self.log_path, 'a', encoding='utf8') as f:
             f.write(string + '\n')
         print(string)
+
+    # 更新操作
+    def update(self):
+        self.max_lenpage = self.update_maxpage
+        # 没有标志文件说明是上次更新已结束，开始新的更新
+        if not os.path.isfile(self.update_mark):
+            if os.path.isdir(self.update_dir):
+                shutil.rmtree(self.update_dir)
+                os.mkdir(self.update_dir)
+            with open(self.update_mark, 'w') as f:
+                f.write("正在进行本次更新,还未结束...")
+            with open(self.pagenum_path, 'w', encoding='utf8') as f:
+                f.write("1 0 0 " + str(self.update_maxpage) + " 0 0")
+            with open(self.urls_waitting_path, 'w', encoding='utf8') as f:
+                json.dump({}, f, ensure_ascii=False)
