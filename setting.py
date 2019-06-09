@@ -1,8 +1,12 @@
+# -*- coding=utf-8 -*-
+# author : Zhang Chizhan
+# date : 2019/6/8
+# func : 配置参数
 import os
 import threading
 import datetime
 import shutil
-# 配置参数
+
 class Setting(object):
     def __init__(self):
         ######################### 以下参数可以修改 #################################
@@ -18,14 +22,14 @@ class Setting(object):
         self.low = 200
         # 最大线程总数量,控制同时访问网页的个数,根据网络状况设定
         self.max_thread = 2
-        # 线程数量刷新间隔,单位为s,检测是否有空闲的线程
+        # 线程数量刷新间隔,单位为s,检测是否有空闲的线程(可调小，但不宜小于0.1)
         self.sleep = 0.5
-        # 初始化文件夹,改为True将清除当前路径下除了本文件的其他所有文件，慎用
+        # 初始化文件夹,改为True将恢复本文件夹解压缩后的初始状态，删除图片文件，历史记录文件和下载的图片文件等，慎用
         self.cleanDir = False
         # 程序出现异常后重新尝试登陆的间隔时间,单位s
         self.restart_sleep = 5
-        # p站允许普通用户显示的检索结果最大页数
-        self.max_lenpage = 1000
+        # 检索结果最大页数
+        self.max_lenpage = 1000     # p站普通用户至多可显示1000页搜索结果，4w张图
         ########################### 以下参数不要更改###########################################
         self.website = 'https://www.pixiv.net/search.php?s_mode=s_tag&word='
         self.page = '&order=date_d&p='
@@ -48,7 +52,7 @@ class Setting(object):
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
             ]       # 网页访问来源伪装为浏览器(列表中随机选择一个)
         self.language = 'zh-CN,zh;q=0.9,en;q=0.8'   # 网页语言
-        self.timeout = 60       # 访问超时时间
+        self.timeout = 60       # 访问超时时间,单位s
         self.pagenum = 1        # 当前页数,默认从第一页开始，可以从历史状态恢复
         self.TempData_dir = 'TempData'   # 历史记录文件夹
         self.result_dir = 'pictures'      # 爬取的图片文件夹
@@ -67,6 +71,7 @@ class Setting(object):
         self.lock = threading.RLock()       # 线程锁
         self.total_browsed_pictures = 0     # 历史浏览及鉴定过的图片总数
         self.total_download = 0             # 历史下载的图片总数
+        self.finished = 0                   # 爬虫是否爬完所有检索结果
 
         # 登录
         self.login_path = 'https://accounts.pixiv.net/login'
