@@ -18,11 +18,10 @@ from math import ceil
 class MyPixivCrawler(object):
     # 初始化爬虫，在爬虫对象创建之时自动调用
     def __init__(self, setting):
-        self.setting = setting    # 爬虫配置类
+        self.setting = setting      # 爬虫配置类
         self.session = rq.session() # 爬虫维持一个会话用于登录网站，记录cookie信息, 并访问检索结果的每一页
         self.isrunning = False      # 记录当前爬虫的运行状态，初始为False,登录成功后改为True，子线程出现异常会改为False
         self.restore()              # 恢复记录
-        self.count = 0
 
     # 恢复历史记录
     def restore(self):
