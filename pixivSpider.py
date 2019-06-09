@@ -17,11 +17,12 @@ from math import ceil
 # 爬虫主体
 class MyPixivCrawler(object):
     # 初始化爬虫，在爬虫对象创建之时自动调用
-    def __init__(self):
-        self.setting = Setting()    # 爬虫配置类
+    def __init__(self, setting):
+        self.setting = setting    # 爬虫配置类
         self.session = rq.session() # 爬虫维持一个会话用于登录网站，记录cookie信息, 并访问检索结果的每一页
         self.isrunning = False      # 记录当前爬虫的运行状态，初始为False,登录成功后改为True，子线程出现异常会改为False
         self.restore()              # 恢复记录
+        self.count = 0
 
     # 恢复历史记录
     def restore(self):
@@ -101,10 +102,10 @@ class MyPixivCrawler(object):
         except:
             # 若捕获异常说明图片主页信息访问失败,保存爬虫记录并返回空字符串
             self.setting.logInfo("单张图片信息主页访问异常！可能网络连接已中断！")
-            self.saveSetting()
+            # self.saveSetting()
             return ""
 
-    # 访问搜索结果的某一页中并提取出本页所有的图片链接
+    # 访问搜索结果的某一页,并提取出本页所有的图片链接
     def getURL_fromPage(self, page_url):
         # 访问搜索结果的某一页
         user_agent = random.choice(self.setting.user_agent_list)
@@ -160,6 +161,8 @@ class MyPixivCrawler(object):
                     self.isrunning = False
                     self.setting.working_thread -= 1
                     return
+            else:
+                self.setting.urls_waitting.pop(url)
         # 若图片喜爱/点赞数小于阈值
         else:
             try:
@@ -167,9 +170,9 @@ class MyPixivCrawler(object):
             except:
                 pass
         # 若以上流程都未出错,则该线程正常结束,更新数据
-        self.setting.working_thread -= 1
         self.setting.finished_thread += 1
         self.setting.total_browsed_pictures += 1
+        self.setting.working_thread -= 1
 
     # 下载保存原始高清图片
     def getPicture(self, url, refer, likecount, id):
@@ -199,7 +202,7 @@ class MyPixivCrawler(object):
                         # TODO 若以上三种后缀都不对,则可能下载图片过程中网络中断,或者是其它后缀,此处可能会出bug
                         self.setting.logInfo("图片下载异常！可能网络连接已中断！")
                         # print(refer)
-                        self.saveSetting()
+                        # self.saveSetting()
                         return False
             pictureType = self.checkPicture(r.content)
             if pictureType:     # 如果下载图片完整
@@ -208,6 +211,11 @@ class MyPixivCrawler(object):
                 # 保存图片
                 with open(filename, 'wb') as f:
                     f.write(r.content)
+                # 如果是更新状态,则在更新文件夹也保存
+                if self.setting.is_updating:
+                    filename = os.path.join(self.setting.update_dir, str(likecount) + '_' + id + pictureType)
+                    with open(filename, 'wb') as f:
+                        f.write(r.content)
                 # 从待处理的图片链接字典中删除本图片,更新并保存记录信息
                 self.setting.logInfo("成功下载一张图片: " + filename + "  喜爱数为: " + str(likecount))
                 self.setting.total_download += 1
@@ -262,6 +270,7 @@ class MyPixivCrawler(object):
             while True:
                 # 如果爬虫异常终止 并且 所有线程都运行结束
                 if not self.isrunning and not self.setting.working_thread:
+                    self.saveSetting()
                     sys.exit(0)     # 退出爬虫并抛出异常
                 # 如果爬虫正常运行 并且 存在空闲线程 则退出监听状态
                 if self.isrunning and self.setting.working_thread < self.setting.max_thread:
@@ -291,8 +300,8 @@ class MyPixivCrawler(object):
             self.crawl_url_list(list(self.setting.urls_waitting.keys()))    # 爬取历史记录中未处理的网页
             self.setting.pagenum += 1            # 本页爬完，准备访问下一页
             self.saveSetting()              # 存档
+        word = "%20".join(self.setting.keyword.split())     # 多个检索关键词用%20拼接
         while self.setting.pagenum <= self.setting.lenpage:      # 若爬完所有页面，则终止
-            word = "%20".join(self.setting.keyword.split())     # 多个检索关键词用%20拼接
             page_url = self.setting.website + word + self.setting.page + str(self.setting.pagenum)  # 得到检索结果某一页的地址
             url_list = self.getURL_fromPage(page_url)       # 爬取检索结果的某页，并从页面中提取出所有图片(约39或40个，视频跳过不管)
             self.saveSetting()                  # 每访问一次新的页面后保存记录
@@ -313,18 +322,28 @@ if __name__ == '__main__':
     # 是否初始化
     if setting.cleanDir:  # 若初始化
         setting.clean()  # 执行初始化
+    # 是否更新
+    if setting.is_updating:
+        setting.update()
+        setting.logInfo("当前是更新状态!更新页数为: %d" % setting.max_lenpage)
+    else:
+        setting.logInfo("当前是非更新状态!")
     setting.logInfo(("开始爬取！搜索关键词为：" + setting.keyword +
                      " | 下载阈值为: %d | 总线程数为: %d") % (setting.low, setting.max_thread))
     setting.logInfo( "正在尝试第一次登录...")
     # 循环监听
     while True:
-        crawler = MyPixivCrawler()  # 生成爬虫
+        crawler = MyPixivCrawler(setting)  # 生成爬虫
         try:
             crawler.run()       # 执行爬虫，若登录失败或者运行过程中连接中断会抛出异常
         except: # 捕获异常
             # 若是爬虫运行结束正常退出，则关闭该程序
             if crawler.setting.finished:
-                setting.logInfo("爬取结束！成功爬取到%d张图片!" % crawler.setting.total_download)
+                if setting.is_updating:
+                    setting.logInfo("更新结束！更新了%d张图片!" % crawler.setting.total_download)
+                    os.remove(setting.update_mark)
+                else:
+                    setting.logInfo("爬取结束！爬取到%d张图片!" % crawler.setting.total_download)
                 break
             # 若因为网络连接中断非正常退出则休眠5s再尝试重新登录
             setting.logInfo("正在尝试重新登录...")
