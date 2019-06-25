@@ -12,13 +12,13 @@ class Setting(object):
     def __init__(self):
         ######################### 以下参数可以修改 #################################
         # 此处输入搜索关键词
-        self.keyword = ''
+        self.keyword = 'saber'
         # 下边引号中输入p站登录邮箱
-        self.pixiv_id = ''
+        self.pixiv_id = 'leanery'
         # 下边输入p站密码
-        self.password =  ''
+        self.password = 'cbk19970217'
         # 此处设置是否打印每张图片的点赞/喜爱数 打印改为True
-        self.likecount_visible = False
+        self.likecount_visible = True
         # 此处设置点赞或者喜爱数下限
         self.low = 200
         # 最大线程总数量,控制同时访问网页的个数,根据网络状况设定

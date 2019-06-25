@@ -53,7 +53,7 @@ class MyPixivCrawler(object):
             'return_to' : 'https://www.pixiv.net/',
         }
         user_agent = random.choice(self.setting.user_agent_list)    # 随机选一个user-agent伪装爬虫
-        header = {'User-Agent' : user_agent, 'Accept-Language' : self.setting.language} # 请求头
+        header = {'User-Agent' : user_agent, 'Accept-Language' : self.setting.language}  # 请求头
         try:
             # 首先用会话访问登录网址并抓取网页  r是返回的响应
             r = self.session.get(self.setting.login_path, headers = header, timeout = self.setting.timeout)  # 连接超时时间设置为10s
@@ -92,7 +92,7 @@ class MyPixivCrawler(object):
         user_agent = random.choice(self.setting.user_agent_list)
         # 获得网页访问语言配置
         language = self.setting.language
-        #传递给header
+        # 传递给header
         header = {'User-Agent' : user_agent, 'Accept-Language' : language}
         try:
             r = rq.get(url, headers = header, timeout = self.setting.timeout)  # 连接超时时间设置
