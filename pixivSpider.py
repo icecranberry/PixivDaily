@@ -14,6 +14,7 @@ from setting import Setting
 import sys
 from math import ceil
 
+
 # 爬虫主体
 class MyPixivCrawler(object):
     # 初始化爬虫，在爬虫对象创建之时自动调用

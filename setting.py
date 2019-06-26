@@ -8,6 +8,7 @@ import datetime
 import shutil
 import json
 
+
 class Setting(object):
     def __init__(self):
         ######################### 以下参数可以修改 #################################
@@ -40,6 +41,7 @@ class Setting(object):
         # 更新状态图片保存文件夹
         self.update_dir = 'updates'
         ########################### 以下参数不要更改###########################################
+        self.daily_site = 'https://www.pixiv.net/ranking.php?mode=daily'
         self.website = 'https://www.pixiv.net/search.php?s_mode=s_tag&word='
         self.page = '&order=date_d&p='
         self.refer = 'https://www.pixiv.net/member_illust.php?mode=medium&illust_id='
