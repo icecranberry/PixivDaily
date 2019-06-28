@@ -38,7 +38,7 @@ class PixivDaily(object):
         except:
             self.setting.logInfo("Login error, please try again")
             return False
-        header['Referer'] = 'https://www.piciv.net/'
+        header['Referer'] = 'https://www.pixiv.net/'
         res = self.session.get(self.setting.check_login_path, headers=header, allow_redirects=False)
         if not re.findall(r'<title>\[pixiv\] 设置 - 用户资料</title>', res.text):
             self.setting.logInfo("Login error, please check the password or username")
@@ -80,8 +80,12 @@ class PixivDaily(object):
         url_list = re.findall(url_form, r.text)
         url_list = [re.sub(r'\\', '', url) for url in url_list]
         # 将所有链接加入到爬虫的未访问链接字典,并设置每个链接的值为0
+        limit = 0
         for url in url_list:
+            limit += 1
             self.setting.urls_waitting[url] = 0
+            if limit == 10:
+                break
         # # 根据搜索结果的某一页的信息获取检索结果图片总数，并计算出总页数(一页40张)
         # self.setting.total_find_pictures = int(re.findall('<span class="count-badge">\d+', r.text)[0].split('>')[-1])
         # self.setting.lenpage = ceil(self.setting.total_find_pictures / 40)
@@ -254,15 +258,16 @@ class PixivDaily(object):
             sys.exit(0)  # 若不成功，退出爬虫，并抛出异常
         if self.setting.urls_waitting:  # 如果历史记录中有未访问的图片网页，则优先处理这些
             self.crawl_url_list(list(self.setting.urls_waitting.keys()))  # 爬取历史记录中未处理的网页
-            self.setting.pagenum += 1  # 本页爬完，准备访问下一页
+            # self.setting.pagenum += 1  # 本页爬完，准备访问下一页
             self.saveSetting()  # 存档
-        word = "%20".join(self.setting.keyword.split())  # 多个检索关键词用%20拼接
+        # word = "%20".join(self.setting.keyword.split())  # 多个检索关键词用%20拼接
         while self.setting.pagenum <= self.setting.lenpage:  # 若爬完所有页面，则终止
-            page_url = self.setting.website + word + self.setting.page + str(self.setting.pagenum)  # 得到检索结果某一页的地址
+            # page_url = self.setting.website + word + self.setting.page + str(self.setting.pagenum)  # 得到检索结果某一页的地址
+            page_url = self.setting.daily_site
             url_list = self.getURL_fromPage(page_url)  # 爬取检索结果的某页，并从页面中提取出所有图片(约39或40个，视频跳过不管)
             self.saveSetting()  # 每访问一次新的页面后保存记录
             self.crawl_url_list(url_list)  # 爬取该页的所有图片
-            self.setting.pagenum += 1  # 本页爬完，准备访问下一页
+            # self.setting.pagenum += 1  # 本页爬完，准备访问下一页
         # 等待线程都运行结束，若爬完所有网页，将self.finished改为True,保存状态并退出
         while self.setting.working_thread:
             time.sleep(self.setting.sleep)
